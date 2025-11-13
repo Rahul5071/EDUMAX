@@ -1,0 +1,39 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isTeacher() {
+      return isAuthenticated() && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    // Notes storage
+    match /notes/{allPaths=} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacher();
+    }
+    
+    // Lectures storage
+    match /lectures/{allPaths=} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacher();
+    }
+    
+    // PYQs storage
+    match /pyqs/{allPaths=} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacher();
+    }
+    
+    // Profile pictures
+    match /profiles/{userId}/{allPaths=} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
